@@ -41,7 +41,7 @@ def mandel(z, maxiter):
         if abs(z) > 2:
             return n
         z = z*z + c
-        print(z,": ",abs(z))
+        #print(z,": ",abs(z))
     return maxiter
      
     
@@ -82,12 +82,12 @@ def mymandel(PIXELS):
 
 
 def printStats(stats):
-    print("Stats for mandelbrot with Maxiter =", MAX_ITERATIONS, "(Iterations->Count)")
+    print("Stats for mandelbrot with Maxiter=", MAX_ITERATIONS, "(Iterations->Quantity)")
     k = 0
     for i,f in enumerate(stats):
         k += f
         print(i,"->",f)
-    print("Total Numer of Complex Points checked:",k)
+    print("Total Numer of Complex Points checked: %s" %k)
 
 def mandelbrot():
     mymandel(PIXELS)
@@ -102,18 +102,20 @@ if __name__ == '__main__':
     
     s="from __main__ import mandelbrot"
     res = timeit.timeit("mandelbrot()", setup=s, number=1)
-    print("Mandel took", res, "seconds")
-    
+    print("Mandel tooks %ss" % res)
     
 
-while True:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            del PIXELS
-            pygame.quit()
-            sys.exit()
-        if event.type == MOUSEMOTION:
-            x = event.pos[0]
-            y = event.pos[1]
-            print("Mouse at Screen(%d, %d) Color(%s) Complex() IterationCount()" % (x, y, PIXELS[x, y]))
-    pygame.display.update()
+    cl = pygame.time.Clock()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                del PIXELS
+                pygame.quit()
+                sys.exit()
+            if event.type == MOUSEMOTION:
+                x = event.pos[0]
+                y = event.pos[1]
+                print("Mouse at Screen(%d, %d) Color(%x) Complex() IterationCount()" % (x, y, PIXELS[x, y]))
+        pygame.display.update()
+        cl.tick(30)
