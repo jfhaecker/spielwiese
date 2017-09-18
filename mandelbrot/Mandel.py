@@ -10,7 +10,7 @@ from colour import Color
 schwefelgelb = Color("#f1dd38")
 verkehrsrot = Color("#bb1e10")
 leuchtorange = Color("#ff4d06")
-maxcolors = 10
+maxcolors = 30
 #farbliste = [schwefelgelb, verkehrsrot, leuchtorange] #.range_to(verkehrsrot, 1000))
 farbliste = list(schwefelgelb.range_to(verkehrsrot, maxcolors))
 print("Liste:",farbliste)
