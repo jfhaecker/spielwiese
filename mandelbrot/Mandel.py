@@ -4,13 +4,15 @@ import time
 import numpy
 import pygame
 from pygame.locals import * 
-from pygame import Color
-
+#from pygame import Color
+from colour import Color
 
 schwefelgelb = Color("#f1dd38")
 verkehrsrot = Color("#bb1e10")
 leuchtorange = Color("#ff4d06")
-farbliste = [schwefelgelb, verkehrsrot, leuchtorange] #.range_to(verkehrsrot, 1000))
+maxcolors = 10
+#farbliste = [schwefelgelb, verkehrsrot, leuchtorange] #.range_to(verkehrsrot, 1000))
+farbliste = list(schwefelgelb.range_to(verkehrsrot, maxcolors))
 print("Liste:",farbliste)
 
 GREEN = (0, 255, 0)
@@ -50,7 +52,7 @@ def mapColor(count):
     if count == MAX_ITERATIONS: 
         return Color('black')
 
-    ret = farbliste[count % 3]
+    ret = farbliste[count % maxcolors]
     #rgbvar2 = [x * 255.0 for x in ret]
     
     #print("Return color for", count, ":",ret)
@@ -76,7 +78,7 @@ def mymandel(PIXELS):
             itercount = mandel(c, MAX_ITERATIONS)
             d = mapColor(itercount)
             #print(c,"=>[",x,",",y, "]:", d)
-            PIXELS[x, y] = d
+            PIXELS[x, y] = pygame.Color(d.hex_l)
          
     printStats(countstats)
 
