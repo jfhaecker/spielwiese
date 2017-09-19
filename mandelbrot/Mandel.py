@@ -10,10 +10,10 @@ from colour import Color
 schwefelgelb = Color("#f1dd38")
 verkehrsrot = Color("#bb1e10")
 leuchtorange = Color("#ff4d06")
-maxcolors = 30
+maxcolors = 70
 #farbliste = [schwefelgelb, verkehrsrot, leuchtorange] #.range_to(verkehrsrot, 1000))
 farbliste = list(schwefelgelb.range_to(verkehrsrot, maxcolors))
-print("Liste:",farbliste)
+#print("Liste:",farbliste)
 
 GREEN = (0, 255, 0)
 RED   = (255, 0, 0)
@@ -23,6 +23,9 @@ WHITE = (255, 255, 255)
 
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 900
+
+PIXELINFO = [ [0 for x in range(SCREEN_WIDTH) ] for y in range(SCREEN_HEIGHT)]
+#print PIXELINFO
 
 COMPLEX_PLANE_RE_MIN = -2#-0.74877#-2
 COMPLEX_PLANE_IMG_MIN = -1.25# 0.06505#-1.25
@@ -76,9 +79,13 @@ def mymandel(PIXELS):
         for x in range(SCREEN_WIDTH):
             c = complex(x_spaces[x], y_spaces[y])
             itercount = mandel(c, MAX_ITERATIONS)
+            l = [c, itercount]
+            #l.append(c)
+            #l.append(itercount)
+            PIXELINFO[x][y] =l 
             d = mapColor(itercount)
             #print(c,"=>[",x,",",y, "]:", d)
-            PIXELS[x, y] = pygame.Color(d.hex_l)
+            PIXELS[x][ y] = pygame.Color(d.hex_l)
          
     printStats(countstats)
 
@@ -118,6 +125,7 @@ if __name__ == '__main__':
             if event.type == MOUSEMOTION:
                 x = event.pos[0]
                 y = event.pos[1]
-                print("Mouse at Screen(%d, %d) Color(%x) Complex() IterationCount()" % (x, y, PIXELS[x, y]))
-        pygame.display.update()
+                print("Mouse at View(x,y): {a},{b}, Complex(re,im): {d}, Color: {c:x}  Iterations: {e}".format(a=x, b=y, c=PIXELS[x, y], d=PIXELINFO[x][y][0], e=PIXELINFO[x][y][1]))
+
+                pygame.display.update()
         cl.tick(30)
