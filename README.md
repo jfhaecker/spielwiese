@@ -1,4 +1,2 @@
 # spielwiese
-Hallo Spielwiese
-
-blabka
+Diverse Programmiergeschichten
