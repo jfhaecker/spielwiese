@@ -12,10 +12,57 @@ var spalteFrei = [damen+1] bool{}
 var aufstgDiagFrei = [damen*2] bool{true}
 var abstgDiagFrei = [damen*2] bool {}
 var loesung = [damen+1] int{}
+
+
+type Position struct {
+	row, col int
+}
+
+
 func main() {
 
-	setzeDame(1, 1)
+	Damenproblem(4)
+	//setzeDame(1, 1)
 }
+
+func Damenproblem(n int) []Position {
+	var positions = make([]Position, n)
+	hasSolution := Damenwahl(n, 0, positions)
+	if(hasSolution == true ) {
+		return positions;
+	} else {
+		return nil
+	}
+	
+}
+
+func Damenwahl(n int, row int, positions []Position) bool {
+	if (n == row) {
+		return true
+	}
+	col := 0
+	for col = 0; col < n; col++ {
+	
+	
+		for k, queen := range positions {
+			fmt.Println("Position:",k,":",queen)
+		}
+
+	}	 
+	return false
+}
+
+func QueenUnderAttac(thisQueen Position, otherQueens []Position) bool {
+	for _, queen := range otherQueens {
+		if queen.row == thisQueen.row || queen.col == thisQueen.col {
+			return true
+		}
+	} 
+	return false
+}
+
+
+
 	/*var l =  math.Log10( float64(damen))
 	var f = math.Floor(l)
 	fmt.Println(" l:", l, "  f:", f);
