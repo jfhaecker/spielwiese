@@ -54,9 +54,10 @@ func Damenwahl(n int, row int, positions []Position) bool {
 
 func QueenUnderAttac(thisQueen Position, otherQueens []Position) bool {
 	for _, queen := range otherQueens {
-		if queen.row == thisQueen.row || queen.col == thisQueen.col {
-			return true
-		}
+		if queen.row == thisQueen.row {return true} 
+                if queen.col == thisQueen.col {return true}
+		if queen.row + queen.col == thisQueen.row + thisQueen.col {return true}  
+		if queen.row - queen.col == thisQueen.row - thisQueen.col {return true}
 	} 
 	return false
 }
