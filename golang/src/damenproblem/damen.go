@@ -5,19 +5,17 @@ import (
 	"math"
 )
 
+const damen int = 8
 
-const damen int = 8 
-var zeileFrei = [damen+1] bool{}
-var spalteFrei = [damen+1] bool{}
-var aufstgDiagFrei = [damen*2] bool{true}
-var abstgDiagFrei = [damen*2] bool {}
-var loesung = [damen+1] int{}
-
+//var zeileFrei = [damen + 1]bool{}
+//var spalteFrei = [damen + 1]bool{}
+//var aufstgDiagFrei = [damen * 2]bool{true}
+//var abstgDiagFrei = [damen * 2]bool{}
+//var loesung = [damen + 1]int{}
 
 type Position struct {
 	row, col int
 }
-
 
 func main() {
 
@@ -28,43 +26,68 @@ func main() {
 func Damenproblem(n int) []Position {
 	var positions = make([]Position, n)
 	hasSolution := Damenwahl(n, 0, positions)
-	if(hasSolution == true ) {
-		return positions;
+	if hasSolution == true {
+		return positions
 	} else {
 		return nil
 	}
-	
+
 }
 
 func Damenwahl(n int, row int, positions []Position) bool {
-	if (n == row) {
+	if n == row {
 		return true
 	}
 	col := 0
 	for col = 0; col < n; col++ {
-	
-	
+
 		for k, queen := range positions {
-			fmt.Println("Position:",k,":",queen)
+			fmt.Println("Position:", k, ":", queen)
 		}
 
-	}	 
+	}
 	return false
 }
 
-func QueenUnderAttac(thisQueen Position, otherQueens []Position) bool {
+func bedroht(pos int, teilloesung []int) bool {
+	for i, p := range teilloesung {
+		// vertikale Koordinate bereits vergeben
+		if p == pos {
+			return true
+		}
+
+		xtest := pos
+		ytest := len(teilloesung)
+
+		xqueen := p
+		yqueen := i
+
+		if Abs(xtest-ytest) == Abs(xqueen-yqueen) {
+			return true
+		}
+	}
+	return false
+}
+
+/*func QueenUnderAttac(thisQueen Position, otherQueens []Position) bool {
 	for _, queen := range otherQueens {
-		if queen.row == thisQueen.row {return true} 
-                if queen.col == thisQueen.col {return true}
-		if queen.row + queen.col == thisQueen.row + thisQueen.col {return true}  
-		if queen.row - queen.col == thisQueen.row - thisQueen.col {return true}
-	} 
+		if queen.row == thisQueen.row {
+			return true
+		}
+		if queen.col == thisQueen.col {
+			return true
+		}
+		if queen.row+queen.col == thisQueen.row+thisQueen.col {
+			return true
+		}
+		if queen.row-queen.col == thisQueen.row-thisQueen.col {
+			return true
+		}
+	}
 	return false
 }
-
-
-
-	/*var l =  math.Log10( float64(damen))
+*/
+/*var l =  math.Log10( float64(damen))
 	var f = math.Floor(l)
 	fmt.Println(" l:", l, "  f:", f);
 	var hasQueen =  [damen][damen]int{}
@@ -77,7 +100,7 @@ func QueenUnderAttac(thisQueen Position, otherQueens []Position) bool {
 	fmt.Println(u);
 }*/
 
-func setzeDame(zeile int , spalte int) {   //, zeilen[]int, spalten[]int ) {
+/*func setzeDame(zeile int , spalte int) {   //, zeilen[]int, spalten[]int ) {
 	loesung[zeile] = spalte
 	zeileFrei[spalte] = false
 	aufstgDiagNichtFrei(zeile, spalte)
@@ -153,3 +176,4 @@ func printSchachbrett(data [damen][damen]int) {
 func findDiag(x,y  int)  int  {
 	return x-y
 }
+*/
