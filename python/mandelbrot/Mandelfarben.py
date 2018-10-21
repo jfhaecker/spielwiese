@@ -12,7 +12,7 @@ WHITE = (255, 255, 255)
 schwefelgelb = ColourColor("#f1dd38")
 verkehrsrot = ColourColor("#bb1e10")
 leuchtorange = ColourColor("#ff4d06")
-maxcolors = 700
+maxcolors = 20
 farbliste = list(schwefelgelb.range_to(verkehrsrot, maxcolors))
 #print("Liste:",farbliste)
 

@@ -80,6 +80,7 @@ if __name__ == '__main__':
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                print("Ende")
                 del PIXELS
                 pygame.quit()
                 sys.exit()
