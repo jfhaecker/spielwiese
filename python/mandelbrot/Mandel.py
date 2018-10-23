@@ -39,13 +39,14 @@ def mymandel():
     print("X_spaceing {a:>30}".format(a=x_spacing))
     (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, COMPLEX_PLANE_IMG_MAX, num=SCREEN_HEIGHT, retstep=True)
     print("X_spaceing {a:>30}".format(a=y_spacing))
+    
     #A two dimensional array, like its surface, is indexed [column, row]
-    for row in tqdm(range(SCREEN_HEIGHT )):
+    for row in tqdm(range(SCREEN_HEIGHT ), desc="Zeilen"):
         for col in range(SCREEN_WIDTH ):
             c = complex(x_samples[col], y_samples[row])
             itercount = mandel(c, MAX_ITERATIONS)
-            PIXELINFO[col][row] = [c, itercount]
             d = Mandelfarben.mapColor(itercount, MAX_ITERATIONS)
+            PIXELINFO[col][row] = [c, itercount, d]
             pygame.display.get_surface().set_at( (col, row), d)
     #printStats(countstats)
 
@@ -61,6 +62,14 @@ def printStats(stats):
 def mandelbrot():
     mymandel()
 
+
+def printPos(pos):
+    x = pos[0]
+    y = pos[1]
+    print("Screen:    [{a:>3}][{b:>3}]".format(a=x, b=y))
+    print("Complex:   [{a:38}]".format(a=PIXELINFO[x][y][0]))
+    print("Iterations:[{a:38}]".format(a=PIXELINFO[x][y][1]))
+    print("Color:     [{a:38}]".format(a=PIXELINFO[x][y][2]))
 
 if __name__ == '__main__':
     pygame.init()
@@ -83,7 +92,9 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEMOTION:
                 x = event.pos[0]
                 y = event.pos[1]
-                print("Mouse at View(x,y): {a:>3},{b:>3} Complex(re,im): {d:>38}, Color: {c:>6}  Iterations: {e:>3}".format(a=x, b=y, c=pygame.display.get_surface().get_at((x, y)), d=PIXELINFO[x][y][0], e=PIXELINFO[x][y][1]))
+                printPos(event.pos)
+                #print("Mouse at View(x,y): {a:>3},{b:>3} Complex(re,im): {d:>38}, Color: {c:>6}  Iterations: {e:>3}".format(a=x, b=y, c=pygame.display.get_surface().get_at((x, y)), d=PIXELINFO[x][y][0], e=PIXELINFO[x][y][1]))
+
 
                 pygame.display.update()
         cl.tick(30)
