@@ -1,10 +1,9 @@
 import sys
-import timeit
 import time
 import numpy
 import pygame
 import Mandelfarben
-
+from tqdm import tqdm
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
@@ -41,7 +40,7 @@ def mymandel():
     (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, COMPLEX_PLANE_IMG_MAX, num=SCREEN_HEIGHT, retstep=True)
     print("X_spaceing {a:>30}".format(a=y_spacing))
     #A two dimensional array, like its surface, is indexed [column, row]
-    for row in range(SCREEN_HEIGHT ):
+    for row in tqdm(range(SCREEN_HEIGHT )):
         for col in range(SCREEN_WIDTH ):
             c = complex(x_samples[col], y_samples[row])
             itercount = mandel(c, MAX_ITERATIONS)
@@ -70,10 +69,7 @@ if __name__ == '__main__':
    # DISPLAY.fill(GREEN)
     PIXELS = pygame.PixelArray(DISPLAY)
     
-    s="from __main__ import mandelbrot"
-    res = timeit.timeit("mandelbrot()", setup=s, number=1)
-    print("Mandel tooks %ss" % res)
-    
+    mandelbrot()
 
     cl = pygame.time.Clock()
 
