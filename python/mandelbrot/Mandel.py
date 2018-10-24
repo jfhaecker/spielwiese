@@ -19,7 +19,7 @@ COMPLEX_PLANE_IMG_MIN = -1.25#  0.06505#-1.25
 COMPLEX_PLANE_RE_MAX = 1#-0.74872#1
 COMPLEX_PLANE_IMG_MAX = 1.25#0.06510#1.25
 
-MAX_ITERATIONS = 100
+MAX_ITERATIONS = 10
 
 #countstats = numpy.zeros( (MAX_ITERATIONS +1), dtype=numpy.int16 )
 #print countstats
@@ -66,10 +66,24 @@ def mandelbrot():
 def printPos(pos):
     x = pos[0]
     y = pos[1]
-    print("Screen:    [{a:>3}][{b:>3}]".format(a=x, b=y))
-    print("Complex:   [{a:38}]".format(a=PIXELINFO[x][y][0]))
-    print("Iterations:[{a:38}]".format(a=PIXELINFO[x][y][1]))
-    print("Color:     [{a:38}]".format(a=PIXELINFO[x][y][2]))
+    print("_______________________________________________________")
+    print("Screen(x,y): [{a:<3}][{b:<3}]".format(a=x, b=y))
+    print("Complex:     [{a:<38}]".format(a=PIXELINFO[x][y][0]))
+    print("Iterations:  [{a:<5}]".format(a=PIXELINFO[x][y][1]))
+    print("Color:       [{a:<38}]".format(a=PIXELINFO[x][y][2]))
+
+
+
+def printRect(rect):
+    print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
+    
+
+def ende():
+    print("Ende")
+    #del PIXELS
+    pygame.quit()
+    sys.exit()
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -80,21 +94,40 @@ if __name__ == '__main__':
     
     mandelbrot()
 
-    cl = pygame.time.Clock()
 
+    cl = pygame.time.Clock()
+    mousedown = False
+    selectRectX = 0
+    selectTextY = 0
+    selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                print("Ende")
-                del PIXELS
-                pygame.quit()
-                sys.exit()
+                ende()
+            if event.type == pygame.KEYDOWN:
+               if event.key == pygame.K_ESCAPE:
+                   ende()
             if event.type == pygame.MOUSEMOTION:
                 x = event.pos[0]
                 y = event.pos[1]
-                printPos(event.pos)
-                #print("Mouse at View(x,y): {a:>3},{b:>3} Complex(re,im): {d:>38}, Color: {c:>6}  Iterations: {e:>3}".format(a=x, b=y, c=pygame.display.get_surface().get_at((x, y)), d=PIXELINFO[x][y][0], e=PIXELINFO[x][y][1]))
+                if(mousedown == False):
+                    printPos(event.pos)
+                else:
+                    printRect(event.pos)
 
-
-                pygame.display.update()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mousedown = True
+                print("MouseDown:"+str(mousedown))
+                x = event.pos[0]
+                y = event.pos[1]
+                selectRectX = x
+                selectRectY = y
+            if event.type == pygame.MOUSEBUTTONUP:
+                mousedown = False
+                print("MauseDown:"+str(mousedown))
+            
+            display = pygame.display
+            pygame.draw.lines(display.get_surface(), Mandelfarben.RED, True, selection_rect, 100)
+            #display.update()
+            display.flip()
         cl.tick(30)
