@@ -6,10 +6,8 @@ import Mandelfarben
 import argparse as ap
 from tqdm import tqdm
 
-SCREEN_WIDTH = 1200
-SCREEN_HEIGHT = 800
 
-PIXELINFO = [ [0 for x in range(SCREEN_HEIGHT) ] for y in range(SCREEN_WIDTH)]
+#PIXELINFO = None
 #print PIXELINFO
 
 COMPLEX_PLANE_RE_MIN = -2#-0.74877#-2
@@ -35,25 +33,25 @@ def mandel(z, maxiter):
     return maxiter
 
 
-def mymandel():
+def mymandel(width, height, pixel_info):
     (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN, 
                                             COMPLEX_PLANE_RE_MAX, 
-                                            num=SCREEN_WIDTH, 
+                                            num=width, 
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=x_spacing))
     (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, 
                                             COMPLEX_PLANE_IMG_MAX, 
-                                            num=SCREEN_HEIGHT, 
+                                            num=height, 
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=y_spacing))
 
     #A two dimensional array, like its surface, is indexed [column, row]
-    for row in tqdm(range(SCREEN_HEIGHT ), desc="Zeilen"):
-        for col in range(SCREEN_WIDTH ):
+    for row in tqdm(range(height ), desc="Zeilen"):
+        for col in range(width ):
             c = complex(x_samples[col], y_samples[row])
             itercount = mandel(c, MAX_ITERATIONS)
             d = Mandelfarben.mapColor(itercount, MAX_ITERATIONS)
-            PIXELINFO[col][row] = [c, itercount, d]
+            pixel_info[col][row] = [c, itercount, d]
             pygame.display.get_surface().set_at( (col, row), d)
     #printStats(countstats)
 
@@ -66,11 +64,9 @@ def printStats(stats):
         print(i,"->",f)
     print("Total Numer of Complex Points checked: %s" %k)
 
-def mandelbrot():
-    mymandel()
 
 
-def printPos(pos):
+def printPos(pos, PIXELINFO):
     x = pos[0]
     y = pos[1]
     print("_______________________________________________________")
@@ -107,11 +103,11 @@ def main():
     args = get_args()
     w_width = args.window_width
     w_height = args.window_height
+    pixel_info = [ [0 for x in range(w_height) ] for y in range(w_width)]
     DISPLAY = pygame.display.set_mode((w_width, w_height))
     pygame.display.set_caption("Hello")
-   # DISPLAY.fill(GREEN)
     PIXELS = pygame.PixelArray(DISPLAY)
-    mandelbrot()
+    mymandel(w_width, w_height, pixel_info)
     cl = pygame.time.Clock()
     mousedown = False
     selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
@@ -126,7 +122,7 @@ def main():
                 x = event.pos[0]
                 y = event.pos[1]
                 if(mousedown == False):
-                    printPos(event.pos)
+                    printPos(event.pos, pixel_info)
                 else:
                     printRect(event.pos)
 
@@ -139,10 +135,10 @@ def main():
                 mousedown = False
                 print("MauseDown:"+str(mousedown))
             
-            display = pygame.display
-            pygame.draw.lines(display.get_surface(), Mandelfarben.RED, True, selection_rect, 100)
-            #display.update()
-            display.flip()
+        display = pygame.display
+        pygame.draw.lines(display.get_surface(), Mandelfarben.RED, True, selection_rect, 100)
+        #display.update()
+        display.flip()
         cl.tick(30)
 
 
