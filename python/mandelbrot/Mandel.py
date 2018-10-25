@@ -3,6 +3,7 @@ import time
 import numpy
 import pygame
 import Mandelfarben
+import argparse as ap
 from tqdm import tqdm
 
 SCREEN_WIDTH = 1200
@@ -32,14 +33,20 @@ def mandel(z, maxiter):
         z = z*z + c
         #print(z,": ",abs(z))
     return maxiter
-     
-    
+
+
 def mymandel():
-    (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN, COMPLEX_PLANE_RE_MAX, num=SCREEN_WIDTH, retstep=True)
-    print("X_spaceing {a:>30}".format(a=x_spacing))
-    (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, COMPLEX_PLANE_IMG_MAX, num=SCREEN_HEIGHT, retstep=True)
-    print("X_spaceing {a:>30}".format(a=y_spacing))
-    
+    (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN, 
+                                            COMPLEX_PLANE_RE_MAX, 
+                                            num=SCREEN_WIDTH, 
+                                            retstep=True)
+    #print("X_spaceing {a:>30}".format(a=x_spacing))
+    (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, 
+                                            COMPLEX_PLANE_IMG_MAX, 
+                                            num=SCREEN_HEIGHT, 
+                                            retstep=True)
+    #print("X_spaceing {a:>30}".format(a=y_spacing))
+
     #A two dimensional array, like its surface, is indexed [column, row]
     for row in tqdm(range(SCREEN_HEIGHT ), desc="Zeilen"):
         for col in range(SCREEN_WIDTH ):
@@ -75,7 +82,8 @@ def printPos(pos):
 
 
 def printRect(rect):
-    print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
+    print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]"
+            .format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
     
 
 def ende():
@@ -85,20 +93,27 @@ def ende():
     sys.exit()
 
 
-if __name__ == '__main__':
+def get_args():
+    parser = ap.ArgumentParser(description = "Haex da best")
+    parser.add_argument("--window_width", help="Width of window",
+                        default=800, type=int)
+    parser.add_argument("--window_height", help="Height of window",
+                        default= 600, type=int)
+    return parser.parse_args()
+
+
+def main():
     pygame.init()
-    DISPLAY = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    args = get_args()
+    w_width = args.window_width
+    w_height = args.window_height
+    DISPLAY = pygame.display.set_mode((w_width, w_height))
     pygame.display.set_caption("Hello")
    # DISPLAY.fill(GREEN)
     PIXELS = pygame.PixelArray(DISPLAY)
-    
     mandelbrot()
-
-
     cl = pygame.time.Clock()
     mousedown = False
-    selectRectX = 0
-    selectTextY = 0
     selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
     while True:
         for event in pygame.event.get():
@@ -120,8 +135,6 @@ if __name__ == '__main__':
                 print("MouseDown:"+str(mousedown))
                 x = event.pos[0]
                 y = event.pos[1]
-                selectRectX = x
-                selectRectY = y
             if event.type == pygame.MOUSEBUTTONUP:
                 mousedown = False
                 print("MauseDown:"+str(mousedown))
@@ -131,3 +144,6 @@ if __name__ == '__main__':
             #display.update()
             display.flip()
         cl.tick(30)
+
+
+if __name__ == '__main__':main()

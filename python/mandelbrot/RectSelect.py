@@ -20,23 +20,28 @@ def main():
                     pygame.quit()
                     return
 
+            if event.type == pygame.MOUSEBUTTONUP:
+                mouse_down = False
+                print("Rectangle:"+str(p))
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_down = True
                 x = event.pos[0]
                 y = event.pos[1]
                 r.topleft = (x,y)
+                r.width = 0
+                r.height = 0
+            
 
             if event.type == pygame.MOUSEMOTION:
                 if mouse_down == True:
+                    drag = True
                     x = event.pos[0]
                     y = event.pos[1]
                     r.width = x - r.x
                     r.height = y - r.y
 
         p = [r.top, r.left, r.right, r.bottom]
-        print("Rect:"+str(r))
-        print("XXX:"+str(p))
-       # pygame.draw.lines(pygame.display.get_surface(), (255,0,0), True,[[10,10], [100,100]]) 
         display.fill((0,0,0))
 
         pygame.draw.rect(pygame.display.get_surface(), (255,0,0), r, 4) 
