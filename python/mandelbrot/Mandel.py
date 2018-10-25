@@ -18,7 +18,6 @@ COMPLEX_PLANE_IMG_MIN = -1.25#  0.06505#-1.25
 COMPLEX_PLANE_RE_MAX = 1#-0.74872#1
 COMPLEX_PLANE_IMG_MAX = 1.25#0.06510#1.25
 
-MAX_ITERATIONS = 10
 
 #countstats = numpy.zeros( (MAX_ITERATIONS +1), dtype=numpy.int16 )
 #print countstats
@@ -33,15 +32,15 @@ def mandel(z, maxiter):
     return maxiter
 
 
-def mymandel(width, height, pixel_info):
-    (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN, 
-                                            COMPLEX_PLANE_RE_MAX, 
-                                            num=width, 
+def mymandel(width, height, max_iter, pixel_info):
+    (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN,
+                                            COMPLEX_PLANE_RE_MAX,
+                                            num=width,
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=x_spacing))
-    (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN, 
-                                            COMPLEX_PLANE_IMG_MAX, 
-                                            num=height, 
+    (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN,
+                                            COMPLEX_PLANE_IMG_MAX,
+                                            num=height,
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=y_spacing))
 
@@ -49,8 +48,8 @@ def mymandel(width, height, pixel_info):
     for row in tqdm(range(height ), desc="Zeilen"):
         for col in range(width ):
             c = complex(x_samples[col], y_samples[row])
-            itercount = mandel(c, MAX_ITERATIONS)
-            d = Mandelfarben.mapColor(itercount, MAX_ITERATIONS)
+            itercount = mandel(c, max_iter)
+            d = Mandelfarben.mapColor(itercount, max_iter)
             pixel_info[col][row] = [c, itercount, d]
             pygame.display.get_surface().set_at( (col, row), d)
     #printStats(countstats)
@@ -80,7 +79,7 @@ def printPos(pos, PIXELINFO):
 def printRect(rect):
     print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]"
             .format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
-    
+
 
 def ende():
     print("Ende")
@@ -95,19 +94,32 @@ def get_args():
                         default=800, type=int)
     parser.add_argument("--window_height", help="Height of window",
                         default= 600, type=int)
+    parser.add_argument("--max_iter", help="Max iterations",
+                        default=100, type=int)
+    parser.add_argument("--complex_topleft", help="Topleft complex number",
+                        default="-2+1.25j", type=complex)
+    parser.add_argument("--complex_width", help="Mandel width",
+                        default=2.0, type=float)
+    parser.add_argument("--complex_height", help="Mandel height",
+                        default=2.0, type=float)
     return parser.parse_args()
 
 
 def main():
     pygame.init()
+    pygame.display.set_caption("Hello")
+
     args = get_args()
     w_width = args.window_width
     w_height = args.window_height
     pixel_info = [ [0 for x in range(w_height) ] for y in range(w_width)]
     DISPLAY = pygame.display.set_mode((w_width, w_height))
-    pygame.display.set_caption("Hello")
     PIXELS = pygame.PixelArray(DISPLAY)
-    mymandel(w_width, w_height, pixel_info)
+    mymandel(w_width, w_height,args.max_iter, pixel_info)
+    
+    
+    
+    
     cl = pygame.time.Clock()
     mousedown = False
     selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
@@ -134,7 +146,7 @@ def main():
             if event.type == pygame.MOUSEBUTTONUP:
                 mousedown = False
                 print("MauseDown:"+str(mousedown))
-            
+
         display = pygame.display
         pygame.draw.lines(display.get_surface(), Mandelfarben.RED, True, selection_rect, 100)
         #display.update()

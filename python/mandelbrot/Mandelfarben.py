@@ -14,7 +14,7 @@ verkehrsrot = ColourColor("#bb1e10")
 leuchtorange = ColourColor("#ff4d06")
 maxcolors = 20
 farbliste = list(schwefelgelb.range_to(verkehrsrot, maxcolors))
-print("Liste:",farbliste)
+#print("Liste:",farbliste)
 
 
 def mapColor(count, max_iter):
