@@ -32,14 +32,15 @@ def mandel(z, maxiter):
     return maxiter
 
 
-def mymandel(width, height, max_iter, pixel_info):
-    (x_samples, x_spacing) = numpy.linspace(COMPLEX_PLANE_RE_MIN,
-                                            COMPLEX_PLANE_RE_MAX,
+def mymandel(width, height, c_topleft,c_width, c_height, max_iter, pixel_info):
+    print("Rendc_topleft.imag {a},{b},{c}".format(a=c_topleft, b=c_width, c=c_height)) 
+    (x_samples, x_spacing) = numpy.linspace(c_topleft.real,
+                                            c_topleft.real + c_width,
                                             num=width,
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=x_spacing))
-    (y_samples, y_spacing) = numpy.linspace(COMPLEX_PLANE_IMG_MIN,
-                                            COMPLEX_PLANE_IMG_MAX,
+    (y_samples, y_spacing) = numpy.linspace(c_topleft.imag,
+                                            c_topleft.imag - c_height,
                                             num=height,
                                             retstep=True)
     #print("X_spaceing {a:>30}".format(a=y_spacing))
@@ -99,9 +100,9 @@ def get_args():
     parser.add_argument("--complex_topleft", help="Topleft complex number",
                         default="-2+1.25j", type=complex)
     parser.add_argument("--complex_width", help="Mandel width",
-                        default=2.0, type=float)
+                        default=3.0, type=float)
     parser.add_argument("--complex_height", help="Mandel height",
-                        default=2.0, type=float)
+                        default=2.5, type=float)
     return parser.parse_args()
 
 
@@ -115,11 +116,14 @@ def main():
     pixel_info = [ [0 for x in range(w_height) ] for y in range(w_width)]
     DISPLAY = pygame.display.set_mode((w_width, w_height))
     PIXELS = pygame.PixelArray(DISPLAY)
-    mymandel(w_width, w_height,args.max_iter, pixel_info)
-    
-    
-    
-    
+
+
+    #print("Args:"+str(args))
+
+    mymandel(w_width, w_height,
+            args.complex_topleft, args.complex_width, args.complex_height, 
+            args.max_iter, pixel_info)
+
     cl = pygame.time.Clock()
     mousedown = False
     selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
