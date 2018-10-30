@@ -3,7 +3,6 @@ import sys
 import time
 import pygame
 import argparse as ap
-import Mandelbrot
 import numpy
 import pygame
 from colour import Color as ColourColor
@@ -117,7 +116,7 @@ def main():
     screen =  pygame.display.set_mode((w_width, w_height))
     pygame.PixelArray(screen)
 
-    histogramm, pixel_info = Mandelbrot.mymandel(w_width, w_height,
+    histogramm, pixel_info = mymandel(w_width, w_height,
             args.complex_topleft, args.complex_width, args.complex_height, 
             args.max_iter)
 
