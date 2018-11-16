@@ -1,4 +1,3 @@
-from tqdm import tqdm
 import sys
 import time
 import pygame
@@ -7,6 +6,8 @@ import numpy
 import pygame
 from colour import Color as ColourColor
 from pygame import Color as PyGameColor
+from tqdm import tqdm
+from numba import jit
 
 
 def init_color(max_colors):
@@ -17,12 +18,13 @@ def init_color(max_colors):
     #print("Liste:",farbliste)
     return farbliste
 
+@jit
 def mapColor(count, max_iter, farben):
     if count == max_iter:
         return (255, 255, 255, 0)
 
     c = farben[count % len(farben)]
-    return (c.red, c.green, c.blue, 0) #PyGameColor(c.hex_l)
+    return (c.red * 255, c.green * 255, c.blue * 255, 0) #PyGameColor(c.hex_l)
 
 
 def get_args():
@@ -67,7 +69,7 @@ def printPos(pos, PIXELINFO):
 def printRect(rect):
     print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]"
             .format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
-
+@jit
 def mandel(z, maxiter):
     c = z
     for n in range(1, maxiter):
@@ -76,7 +78,6 @@ def mandel(z, maxiter):
         z = z*z + c
         #print(z,": ",abs(z))
     return maxiter
-
 
 def mymandel(width, height, c_topleft,c_width, c_height, max_iter):
 
