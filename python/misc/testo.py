@@ -3,7 +3,7 @@ from datetime import timedelta
 from matplotlib import pyplot as plt
 import numpy as np
 
-dates = [       
+dates = [
 "21.7.2010",
 "15.9.2010",
 "17.11.2010",
@@ -65,7 +65,12 @@ print("Next(+{a}days)=>{b}".format(a=days_between,b=next_date))
  
 dates.append(next_date)
 
-k = [ (datetime.strptime(date, date_format) - datetime.strptime(dates[i-1], date_format)).days for i, date in enumerate(dates) if i> 0]
+k = [
+        (datetime.strptime(date, date_format) -
+            datetime.strptime(dates[i-1], date_format)).days
+        for i, date in enumerate(dates)
+        if i> 0
+    ]
 
 k.insert(0, int(sum(k) / len(k)))
 print(k)
@@ -74,6 +79,7 @@ print(k)
 #a = np.arange(0, len(dates))
 plt.plot(dates, k, "bo", dates, k, "k")
 plt.plot(dates, [k[0]]*len(k), label="AVG", linestyle="--")
+#plt.bar(dates, k)
 plt.xlabel("Datum")
 plt.ylabel("Tage")
 plt.xticks(rotation=60)
