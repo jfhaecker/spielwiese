@@ -1,5 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
+from matplotlib import pyplot as plt
+import numpy as np
 
 dates = [       
 "21.7.2010",
@@ -57,5 +59,24 @@ last = dates[-1]
 
 last_date = datetime.strptime(last,date_format) 
 print("Last:{a}".format(a=datetime.strftime(last_date, date_format )))
-next_date = last_date + timedelta(days=days_between) 
-print("Next(+{a}days)=>{b}".format(a=days_between,b=datetime.strftime(next_date, date_format)))
+nd = last_date + timedelta(days=days_between) 
+next_date = datetime.strftime(nd, date_format)
+print("Next(+{a}days)=>{b}".format(a=days_between,b=next_date))
+ 
+dates.append(next_date)
+
+k = [ (datetime.strptime(date, date_format) - datetime.strptime(dates[i-1], date_format)).days for i, date in enumerate(dates) if i> 0]
+
+k.insert(0, int(sum(k) / len(k)))
+print(k)
+
+
+#a = np.arange(0, len(dates))
+plt.plot(dates, k, "bo", dates, k, "k")
+plt.plot(dates, [k[0]]*len(k), label="AVG", linestyle="--")
+plt.xlabel("Datum")
+plt.ylabel("Tage")
+plt.xticks(rotation=60)
+plt.grid(True)
+
+plt.show()

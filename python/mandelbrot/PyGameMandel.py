@@ -56,13 +56,14 @@ def printStats(stats):
 
 
 def printPos(pos, PIXELINFO):
+    print(PIXELINFO)
     x = pos[0]
     y = pos[1]
     print("_______________________________________________________")
     print("Screen(x,y): [{a:<3}][{b:<3}]".format(a=x, b=y))
     print("Complex:     [{a:<38}]".format(a=PIXELINFO[x][y][0]))
     print("Iterations:  [{a:<5}]".format(a=PIXELINFO[x][y][1]))
-    print("Color:       [{a:<38}]".format(a=PIXELINFO[x][y][2]))
+    print("Color:       [{a}]".format(a=str(PIXELINFO[x][y][2])))
 
 
 
@@ -79,7 +80,9 @@ def mandel(z, maxiter):
         #print(z,": ",abs(z))
     return maxiter
 
-def mymandel(width, height, c_topleft,c_width, c_height, max_iter):
+
+@jit
+def mymandel(width, height, c_topleft,c_width, c_height, max_iter, pixel_info):
 
     print("RenderMandel:  {a},{b},{c}".format(a=c_topleft, b=c_width, c=c_height)) 
     farben = init_color(max_iter)
@@ -93,20 +96,20 @@ def mymandel(width, height, c_topleft,c_width, c_height, max_iter):
                                             num=height, retstep=True)
     #print("X_spaceing {a:>30}".format(a=y_spacing))
 
-    histogramm = numpy.zeros(max_iter + 1)
-    pixel_info = [ [0 for x in range(height) ] for y in range(width)]
+    histogramm = 1#numpy.zeros(max_iter + 1)
+    #pixel_info = [[]]# numpy.empty((height, width))
 
     #A two dimensional array, like its surface, is indexed [column, row]
     for row in tqdm(range(height ), desc="Zeilen"):
         for col in range(width ):
             c = complex(x_samples[col], y_samples[row])
             itercount = mandel(c, max_iter)
-            histogramm[itercount] += 1 
+            #histogramm[itercount] += 1 
             d = mapColor(itercount, max_iter, farben)
             pixel_info[col][row] = [c, itercount, d]
             pygame.display.get_surface().set_at( (col, row), d)
     #printStats(countstats)
-    return histogramm, pixel_info
+    return (histogramm, pixel_info)
 
 
 def main():
@@ -117,11 +120,11 @@ def main():
     screen =  pygame.display.set_mode((w_width, w_height))
     pygame.PixelArray(screen)
 
-    histogramm, pixel_info = mymandel(w_width, w_height,
-            args.complex_topleft, args.complex_width, args.complex_height, 
-            args.max_iter)
+    pixel_info = [ [0 for x in range(w_height) ] for y in range(w_width)]
+    (histogramm, pixel_info) = mymandel(w_width, w_height,
+            args.complex_topleft, args.complex_width, args.complex_height,args.max_iter, pixel_info)
 
-    print(str(histogramm))
+    #print(str(histogramm))
 
     mouse_down, running = False, True
     selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
