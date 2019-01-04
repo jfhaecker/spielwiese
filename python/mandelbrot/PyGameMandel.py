@@ -10,20 +10,37 @@ from tqdm import tqdm
 from numba import jit
 
 
+class ScreenInfo:
+    def __init__(self, screen_x, screen_y, pos_complex, iterations, color):
+        self.screen_x = screen_x
+        self.screen_y = screen_y
+        self.pos_complex = pos_complex
+        self.iterations = iterations
+        self.color = color
+
+    def __str__(self):
+        x = ("Screen(x,y): [{a:<3}][{b:<3}]".format(a=self.screen_x,
+                                                    b=self.screen_y))
+        y = ("Complex:     [{a:<38}]".format(a=self.pos_complex))
+        u = ("Iterations:  [{a:<5}]".format(a=self.iterations))
+        v = ("Color:       [{a}]".format(a=self.color))
+        return x + "\n" + y  +"\n" + u + "\n" + v
+
 def init_color(max_colors):
-    colors = sns.color_palette("hls", 1000)
+    colors = sns.color_palette("hls", 10000)
     return colors
 
 @jit
 def mapColor(count, max_iter, farben):
-    #print("Map Color {a}".format(a=count))
-    if count == 0:
-        return (255, 0, 0, 0)
 
     c = farben[count % len(farben)]
-    csys.hls_to_rgb(c[0], c[1], c[2])
-    #return (c.red * 255, c.green * 255, c.blue * 255, 0) #PyGameColor(c.hex_l)
-    return c
+    d = csys.hls_to_rgb(c[0], c[1], c[2])
+    pixel_color = pygame.Color(0, 0, 0)
+    if(count > 0):
+         pixel_color = pygame.Color(int(d[0] * 256), 
+                        int(d[1] * 256) , 
+                        int(d[2] * 256))
+    return pixel_color
 
 def get_args():
     parser = ap.ArgumentParser(description = "Haex da best")
@@ -54,17 +71,13 @@ def printStats(stats):
 
 
 
-def printPos(pos, PIXELINFO):
+def printPos(pos, screen_infos):
     #print(PIXELINFO)
-    pass
-    #x = pos[0]
-    #y = pos[1]
-    #print("_______________________________________________________")
-    #print("Screen(x,y): [{a:<3}][{b:<3}]".format(a=x, b=y))
-    #print("Complex:     [{a:<38}]".format(a=PIXELINFO[x][y][0]))
-    #print("Iterations:  [{a:<5}]".format(a=PIXELINFO[x][y][1]))
-    #print("Color:       [{a}]".format(a=str(PIXELINFO[x][y][2])))
-
+    x = pos[0]
+    y = pos[1]
+    info = screen_infos[x][y]
+    print("_______________________________________________________")
+    print(info)
 
 
 def printRect(rect):
@@ -84,11 +97,13 @@ def mandelbrot(c, maxiter, horizon, log_horizon):
 
 
 #@jit
-def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
+def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
 
     farben = init_color(max_iter)
     print("RenderMandel: [{a},{b}][{c},{d}]".
             format(a=xmin, b=ymin, c=ymax, d=ymax)) 
+
+    update_screen_every_row = 100
 
     #geklaut
     horizon = 2.0 ** 40
@@ -96,39 +111,35 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
     log_horizon = np.log(np.log(horizon))/np.log(2)
 
 
+
     r1 = np.linspace(xmin, xmax, width)
     r2 = np.linspace(ymin, ymax, height)
-    n3 = np.empty((width, height))
 
     #A two dimensional array, like its surface, is indexed [column, row]
     for row in tqdm(range(width ), desc="Zeilen"):
         for col in range(height ):
-            c = complex(r1[row], r2[col])
+            c = complex(r1[col], r2[row])
+
             i = mandelbrot(c, max_iter, horizon, log_horizon)
             # index i aus der magischen log funktion wieder zu int machen
             # aber nicht einach abschneiden, sonst gibts farbbänder
             index = int(i*100)
             #print("Alter Index{a} neuer Index{b}".format(a=i, b=index))
-            d = mapColor(index, max_iter, farben)
+            color = mapColor(index, max_iter, farben)
+
+            screen_infos[col][row] = ScreenInfo(col, row, c, index, color)
 
             #print("Color for index{a}:{b}".format(a=index, b=d))
             #n3[row, col] = d
-            if(index > 0):
-                c = pygame.Color(int(d[0] * 256), 
-                                int(d[1] * 256) , 
-                                int(d[2] * 256))
-            else:
-                c = pygame.Color(0, 0, 0)
-            pygame.display.get_surface().set_at( (row, col), c)
+            pygame.display.get_surface().set_at( (col, row), color)
+            if (row % update_screen_every_row == 0):
+                display = pygame.display.flip()
     return (r1, r2)
 
 def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
     mandelbrot_set(xmin, xmax, ymin, ymax,
                             width, height,
                             max_iter, pixel_info)
-    #pixel_info[col][row] = [c, itercount, d]
-    #printStats(countstats)
-    #return (histogramm, pixel_info)
 
 
 def main():
@@ -138,9 +149,6 @@ def main():
     xmin, xmax, ymin, ymax = args.xmin, args.xmax, args.ymin,args.ymax, 
     width, height = args.width, args.height
     max_iter = args.max_iter
-
-    print(max_iter)
-
 
     screen =  pygame.display.set_mode((width, height))
     pygame.PixelArray(screen)
@@ -177,6 +185,8 @@ def main():
 
         display = pygame.display.flip()
         pygame.time.Clock().tick(30)
+    
     pygame.quit()
+
 
 if __name__ == '__main__':main()
