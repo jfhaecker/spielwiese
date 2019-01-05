@@ -1,3 +1,6 @@
+
+""" Jetzt wird noch mehr gemandelt """
+
 import sys
 import time
 import pygame
@@ -33,7 +36,7 @@ class ScreenInfo:
         return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v
 
 def init_color(max_colors):
-    colors = sns.color_palette("hls", 15000)
+    colors = sns.hls_palette(100,  l=.3, s=.8)
     return colors
 
 @jit
@@ -87,65 +90,58 @@ def printPos(pos, screen_infos):
 
 
 def printRect(rect):
-    print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]"
-            .format(a=rect[0], b=rect[1], c=rect[3], d=rect[4]))
+    #print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect.topleft,
+    print("Rect(p1, p2, p3, p4): [{a},{b},{c},{d}]".format(a=rect.topleft,
+                                b=rect.bottomleft, c=rect.topright, d=rect.bottomright))
 #@jit
 def mandelbrot(c, maxiter, horizon, log_horizon):
     z = c
     for n in range(maxiter):
         az = abs(z)
         if az > horizon:
-            # WTF?
-            #return n - np.log(np.log(az))/np.log(2) + log_horizon 
-            return (n, az) 
+            return (n, az)
         z = z*z + c
-        #print(z,": ",abs(z))
     return (0,0) 
 
+def get_complex_coords(xmin, xmax, ymin, ymax, width, height):
+    r1 = np.linspace(xmin, xmax, width)
+    r2 = np.linspace(ymax, ymin, height) #reverse
+    return (r1, r2)
 
 #@jit
 def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
-
+    surface = pygame.Surface((width, height))
     farben = init_color(max_iter)
-    print("RenderMandel: [{a},{b}][{c},{d}]".
-            format(a=xmin, b=ymin, c=ymax, d=ymax)) 
-
+    print("RenderMandel: [{a},{b}][{c},{d}]".format(a=xmin, b=ymin, c=xmax, d=ymax)) 
     update_screen_every_row = 100
-
     #geklaut
-    horizon = 2.0 ** 40
-    #keine Ahnung
+    horizon = 2.0 ** 40 
     log_horizon = np.log(np.log(horizon))/np.log(2)
+    (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
-    r1 = np.linspace(xmin, xmax, width)
-    r2 = np.linspace(ymin, ymax, height)
-
-    #A two dimensional array, like its surface, is indexed [column, row]
     for row in tqdm(range(width ), desc="Zeilen"):
         for col in range(height ):
             c = complex(r1[col], r2[row])
-
             (n, az) = mandelbrot(c, max_iter, horizon, log_horizon)
             nk = 0
             if(n > 0):
+                #wtf
                 nk = n - np.log(np.log(az))/np.log(2) + log_horizon 
                 # index i aus der magischen log funktion wieder zu int machen
                 # aber nicht einach abschneiden, sonst gibts farbbänder
-                index = int(nk*100)
+                index = int(nk*10)
             else:
                 index = 0
-
             color = mapColor(index, max_iter, farben)
             screen_infos[col][row] = ScreenInfo(col, row, c,
                                                 n, nk,index, az, color)
-            pygame.display.get_surface().set_at( (col, row), color)
-
-            if (row % update_screen_every_row == 0):
-                display = pygame.display.flip()
-
+            surface.set_at( (col, row), color)
+           # if (row % update_screen_every_row == 0):
+           #  display = pygame.display.flip()
+    return surface
 
 def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
-    mandelbrot_set(xmin, xmax, ymin, ymax,
+    return mandelbrot_set(xmin, xmax, ymin, ymax,
                             width, height,
                             max_iter, pixel_info)
 
@@ -153,46 +149,78 @@ def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info
 def main():
     pygame.init()
 
+    print(pygame.display.Info())
     args = get_args()
     xmin, xmax, ymin, ymax = args.xmin, args.xmax, args.ymin,args.ymax, 
     width, height = args.width, args.height
     max_iter = args.max_iter
 
     screen =  pygame.display.set_mode((width, height))
-    pygame.PixelArray(screen)
-
-    pixel_info = [ [0 for x in range(height) ] for y in range(width)]
-    mandelbrot_image(
-            xmin, xmax, ymin,ymax,
-            width, height,
-            max_iter, pixel_info)
-
-    #print(str(histogramm))
-
     mouse_down, running = False, True
-    selection_rect = [ (0,0), (0,0), (0,0), (0,0) ] 
-    while running:
+    render_next = True
+    selection_rect = pygame.Rect(0, 0, width, height)
+    pixel_info = [ [0 for x in range(height) ] for y in range(width)]
+    while(running):
+        if (render_next):
+            pixel_info = [ [0 for x in range(height) ] for y in range(width)]
+            surface = mandelbrot_image( xmin, xmax, ymin,ymax, 
+                                    width, 
+                                    height,
+                                    max_iter, pixel_info)
+            #xmin = pixel_infos[][]
+            #xmax = pixel_info
+            render_next = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False 
             if event.type == pygame.KEYDOWN:
                if event.key == pygame.K_ESCAPE:
                    running = False
+            #MOUSEMOTION
             if event.type == pygame.MOUSEMOTION:
                 x, y = event.pos[0], event.pos[1]
                 if(mouse_down == False):
                     printPos(event.pos, pixel_info)
                 else:
-                    printRect(event.pos)
+                    selection_rect.width = x - selection_rect.x
+                    selection_rect.height = y - selection_rect.y
+                    #printRect(selection_rect)
+            #MOUSEDOWN
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y, mouse_down = event.pos[0], event.pos[1], True
+                selection_rect.topleft = (x, y)
+                selection_rect.width, selection_rect.height = 0, 0
                 print("MouseDown:"+str(mouse_down))
+            #MOUSEUP
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_down = False
-                print("MauseDown:"+str(mouse_down))
+                render_next = True
+                print("MouseDown! New Mandelbrot: {a}".format(a=selection_rect))
+                x1 = pixel_info[selection_rect.topleft[0]][selection_rect.topleft[1]]
+                x2 = pixel_info[selection_rect.bottomright[0]][selection_rect.bottomright[1]]
+                x3 = pixel_info[selection_rect.bottomleft[0]][selection_rect.bottomleft[1]]
+                x4 = pixel_info[selection_rect.topright[0]][selection_rect.topright[1]]
+                print("topleft:{a}".format(a=x1))
+                print("bottomright:{a}".format(a=x2))
+                print("bottomleft:{a}".format(a=x3))
+                print("topright:{a}".format(a=x4))
+                print("XMin=>{a}".format(a=x3.pos_complex.real))
+                print("YMin=>{a}".format(a=x3.pos_complex.imag))
+                print("XMax=>{a}".format(a=x4.pos_complex.real))
+                print("YMax=>{a}".format(a=x4.pos_complex.imag))
+                xmin = x3.pos_complex.real
+                ymin = x3.pos_complex.imag
+                xmax = x4.pos_complex.real
+                ymax = x4.pos_complex.imag
 
+        screen = pygame.display.get_surface()
+        screen.blit(surface,(0, 0))
+        pygame.draw.rect(pygame.display.get_surface(), (255, 255, 255), selection_rect, 4)
         display = pygame.display.flip()
         pygame.time.Clock().tick(30)
+    
+    
     
     pygame.quit()
 
