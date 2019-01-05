@@ -11,23 +11,29 @@ from numba import jit
 
 
 class ScreenInfo:
-    def __init__(self, screen_x, screen_y, pos_complex, iterations, color):
+    def __init__(self, screen_x, screen_y, pos_complex, iterations, n_iter, nm_iter, abs_complex, color):
         self.screen_x = screen_x
         self.screen_y = screen_y
         self.pos_complex = pos_complex
         self.iterations = iterations
+        self.n_iter = n_iter
+        self.nm_iter = nm_iter
+        self.abs_complex = abs_complex
         self.color = color
 
     def __str__(self):
         x = ("Screen(x,y): [{a:<3}][{b:<3}]".format(a=self.screen_x,
                                                     b=self.screen_y))
         y = ("Complex:     [{a:<38}]".format(a=self.pos_complex))
-        u = ("Iterations:  [{a:<5}]".format(a=self.iterations))
+        w = ("Abs(Z):      [{a:<38}]".format(a=self.abs_complex))
+        u = ("Iterations:  [{a:<5}][{b:<5}][{c:<5}]".format(a=self.iterations,
+                                                            b=self.n_iter,
+                                                            c=self.nm_iter))
         v = ("Color:       [{a}]".format(a=self.color))
-        return x + "\n" + y  +"\n" + u + "\n" + v
+        return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v
 
 def init_color(max_colors):
-    colors = sns.color_palette("hls", 10000)
+    colors = sns.color_palette("hls", 15000)
     return colors
 
 @jit
@@ -90,10 +96,11 @@ def mandelbrot(c, maxiter, horizon, log_horizon):
         az = abs(z)
         if az > horizon:
             # WTF?
-            return n - np.log(np.log(az))/np.log(2) + log_horizon 
+            #return n - np.log(np.log(az))/np.log(2) + log_horizon 
+            return (n, az) 
         z = z*z + c
         #print(z,": ",abs(z))
-    return 0 
+    return (0,0) 
 
 
 #@jit
@@ -110,8 +117,6 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
     #keine Ahnung
     log_horizon = np.log(np.log(horizon))/np.log(2)
 
-
-
     r1 = np.linspace(xmin, xmax, width)
     r2 = np.linspace(ymin, ymax, height)
 
@@ -120,21 +125,24 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
         for col in range(height ):
             c = complex(r1[col], r2[row])
 
-            i = mandelbrot(c, max_iter, horizon, log_horizon)
-            # index i aus der magischen log funktion wieder zu int machen
-            # aber nicht einach abschneiden, sonst gibts farbbänder
-            index = int(i*100)
-            #print("Alter Index{a} neuer Index{b}".format(a=i, b=index))
+            (n, az) = mandelbrot(c, max_iter, horizon, log_horizon)
+            nk = 0
+            if(n > 0):
+                nk = n - np.log(np.log(az))/np.log(2) + log_horizon 
+                # index i aus der magischen log funktion wieder zu int machen
+                # aber nicht einach abschneiden, sonst gibts farbbänder
+                index = int(nk*100)
+            else:
+                index = 0
+
             color = mapColor(index, max_iter, farben)
-
-            screen_infos[col][row] = ScreenInfo(col, row, c, index, color)
-
-            #print("Color for index{a}:{b}".format(a=index, b=d))
-            #n3[row, col] = d
+            screen_infos[col][row] = ScreenInfo(col, row, c,
+                                                n, nk,index, az, color)
             pygame.display.get_surface().set_at( (col, row), color)
+
             if (row % update_screen_every_row == 0):
                 display = pygame.display.flip()
-    return (r1, r2)
+
 
 def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
     mandelbrot_set(xmin, xmax, ymin, ymax,
