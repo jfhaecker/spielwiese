@@ -36,7 +36,8 @@ class ScreenInfo:
         return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v
 
 def init_color(max_colors):
-    colors = sns.hls_palette(100,  l=.3, s=.8)
+    #colors = sns.hls_palette(100,  l=.3, s=.8)
+    colors = sns.hls_palette(100)
     return colors
 
 @jit
@@ -99,6 +100,7 @@ def mandelbrot(c, maxiter, horizon, log_horizon):
     for n in range(maxiter):
         az = abs(z)
         if az > horizon:
+            #uu = int(100 * (n ** 0.3))
             return (n, az)
         z = z*z + c
     return (0,0) 
@@ -129,7 +131,8 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
                 nk = n - np.log(np.log(az))/np.log(2) + log_horizon 
                 # index i aus der magischen log funktion wieder zu int machen
                 # aber nicht einach abschneiden, sonst gibts farbbänder
-                index = int(nk*10)
+                index = int(nk*100)
+                index = int(index ** 0.3)
             else:
                 index = 0
             color = mapColor(index, max_iter, farben)
