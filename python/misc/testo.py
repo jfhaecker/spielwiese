@@ -52,11 +52,12 @@ dates = [
 "27.8.2018",
 "30.10.2018",
 "03.01.2019",
-"07.03.2019"
+"07.03.2019",
+"09.05.2019"
 ]
 
 date_format = "%d.%m.%Y"
-days_between = 70
+days_between = 63
 last = dates[-1]
 
 last_date = datetime.strptime(last,date_format) 
