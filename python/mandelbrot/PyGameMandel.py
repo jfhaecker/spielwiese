@@ -11,6 +11,7 @@ import seaborn as sns
 import colorsys as csys
 from tqdm import tqdm
 from numba import jit
+from math import log,log2
 
 
 class ScreenInfo:
@@ -52,6 +53,19 @@ def mapColor(count, max_iter, farben):
                         int(d[2] * 256))
     return pixel_color
 
+
+def mapColor2(m, max_iter):
+    r = int(255 * m / max_iter)
+    g = int(255 * m / max_iter)
+    b = int(255 * m / max_iter)
+    return pygame.Color(r, g, b)
+
+def mapColor3(m, max_iter):
+    hue = int(360 * m / max_iter)
+    c = pygame.Color(0, 0,0)
+    c.hsva = (hue, 50, 50, 50)
+    return c
+
 def get_args():
     parser = ap.ArgumentParser(description = "Haex da best")
     parser.add_argument("--width", help="Width of window",
@@ -59,7 +73,7 @@ def get_args():
     parser.add_argument("--height", help="Height of window",
                         default= 800, type=int)
     parser.add_argument("--max_iter", help="Max iterations",
-                        default=100, type=int)
+                        default=1000, type=int)
     parser.add_argument("--xmin", help="XMin",
                         default=-2.0, type=float)
     parser.add_argument("--xmax", help="XMax",
@@ -95,15 +109,16 @@ def printRect(rect):
     print("Rect(p1, p2, p3, p4): [{a},{b},{c},{d}]".format(a=rect.topleft,
                                 b=rect.bottomleft, c=rect.topright, d=rect.bottomright))
 #@jit
-def mandelbrot(c, maxiter, horizon, log_horizon):
+def mandelbrot(c, max_iter):
     z = c
-    for n in range(maxiter):
-        az = abs(z)
-        if az > horizon:
-            #uu = int(100 * (n ** 0.3))
-            return (n, az)
+    for n in range(max_iter):
+        if abs(z) > 2:
+            ret = (n, n + 1 - log(log2(abs(z))), abs(z))
+            return ret
+            #return n + 1 - log(log2(abs(z)))
         z = z*z + c
-    return (0,0) 
+    ret = (max_iter, max_iter, abs(z))
+    return ret
 
 def get_complex_coords(xmin, xmax, ymin, ymax, width, height):
     r1 = np.linspace(xmin, xmax, width)
@@ -117,27 +132,14 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
     print("RenderMandel: [{a},{b}][{c},{d}]".format(a=xmin, b=ymin, c=xmax, d=ymax)) 
     update_screen_every_row = 100
     #geklaut
-    horizon = 2.0 ** 40 
-    log_horizon = np.log(np.log(horizon))/np.log(2)
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
     for row in tqdm(range(width ), desc="Zeilen"):
         for col in range(height ):
             c = complex(r1[col], r2[row])
-            (n, az) = mandelbrot(c, max_iter, horizon, log_horizon)
-            nk = 0
-            if(n > 0):
-                #wtf
-                nk = n - np.log(np.log(az))/np.log(2) + log_horizon 
-                # index i aus der magischen log funktion wieder zu int machen
-                # aber nicht einach abschneiden, sonst gibts farbbänder
-                index = int(nk*100)
-                index = int(index ** 0.3)
-            else:
-                index = 0
-            color = mapColor(index, max_iter, farben)
-            screen_infos[col][row] = ScreenInfo(col, row, c,
-                                                n, nk,index, az, color)
+            (n,m,z) = mandelbrot(c, max_iter)
+            color = mapColor3(m, max_iter)
+            screen_infos[col][row] = ScreenInfo(col, row, c, n, m, 0,c, color)
             surface.set_at( (col, row), color)
            # if (row % update_screen_every_row == 0):
            #  display = pygame.display.flip()
