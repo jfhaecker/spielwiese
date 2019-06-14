@@ -62,8 +62,10 @@ def mapColor2(m, max_iter):
 
 def mapColor3(m, max_iter):
     hue = int(360 * m / max_iter)
+    saturation = 100
+    value = 100 if m < max_iter else 0
     c = pygame.Color(0, 0,0)
-    c.hsva = (hue, 50, 50, 50)
+    c.hsva = (hue, saturation, value, 0)
     return c
 
 def get_args():
@@ -73,7 +75,7 @@ def get_args():
     parser.add_argument("--height", help="Height of window",
                         default= 800, type=int)
     parser.add_argument("--max_iter", help="Max iterations",
-                        default=1000, type=int)
+                        default=100, type=int)
     parser.add_argument("--xmin", help="XMin",
                         default=-2.0, type=float)
     parser.add_argument("--xmax", help="XMax",
@@ -109,13 +111,16 @@ def printRect(rect):
     print("Rect(p1, p2, p3, p4): [{a},{b},{c},{d}]".format(a=rect.topleft,
                                 b=rect.bottomleft, c=rect.topright, d=rect.bottomright))
 #@jit
-def mandelbrot(c, max_iter):
+def mandelbrot(c, max_iter, smooth):
     z = c
     for n in range(max_iter):
         if abs(z) > 2:
-            ret = (n, n + 1 - log(log2(abs(z))), abs(z))
-            return ret
-            #return n + 1 - log(log2(abs(z)))
+            if smooth:
+                ret = (n, n + 1 - log(log2(abs(z))), abs(z))
+                return ret
+            else:
+                ret = (n, n, abs(z))
+                return ret 
         z = z*z + c
     ret = (max_iter, max_iter, abs(z))
     return ret
@@ -125,21 +130,29 @@ def get_complex_coords(xmin, xmax, ymin, ymax, width, height):
     r2 = np.linspace(ymax, ymin, height) #reverse
     return (r1, r2)
 
+
+def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screeninfos):
+    histogram = defaultdict(lambda : 0)
+    (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
+    
+    for row in tqdm(range(height), desc="Zeilen"):
+        for col in range(width):
+            c = complex(r1[col], r2[row])
+            (n,m,z) = mandelbrot(c, max_iter, True)
+             
+
 #@jit
 def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
     surface = pygame.Surface((width, height))
-    farben = init_color(max_iter)
-    print("RenderMandel: [{a},{b}][{c},{d}]".format(a=xmin, b=ymin, c=xmax, d=ymax)) 
-    update_screen_every_row = 100
-    #geklaut
+    print("RenderMandel: [{a},{b}][{c},{d}][{e},{f}]".format(a=xmin, b=ymin, c=xmax, d=ymax, e=width, f=height )) 
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
-    for row in tqdm(range(width ), desc="Zeilen"):
-        for col in range(height ):
+    for row in tqdm(range(height ), desc="Zeilen"):
+        for col in range(width):
             c = complex(r1[col], r2[row])
-            (n,m,z) = mandelbrot(c, max_iter)
+            (n,m,z) = mandelbrot(c, max_iter, True)
             color = mapColor3(m, max_iter)
-            screen_infos[col][row] = ScreenInfo(col, row, c, n, m, 0,c, color)
+            screen_infos[col][row] = ScreenInfo(col, row, c, n, m, 0,z, color)
             surface.set_at( (col, row), color)
            # if (row % update_screen_every_row == 0):
            #  display = pygame.display.flip()
