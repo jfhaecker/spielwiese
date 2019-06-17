@@ -7,12 +7,11 @@ import pygame
 import argparse as ap
 import numpy as np
 import pygame
-import seaborn as sns
-import colorsys as csys
 from tqdm import tqdm
 from numba import jit
 from math import log,log2
-
+from collections import defaultdict
+from ascii_graph import Pyasciigraph
 
 class ScreenInfo:
     def __init__(self, screen_x, screen_y, pos_complex, iterations, n_iter, nm_iter, abs_complex, color):
@@ -62,7 +61,7 @@ def mapColor2(m, max_iter):
 
 def mapColor3(m, max_iter):
     hue = int(360 * m / max_iter)
-    saturation = 100
+    saturation = 50
     value = 100 if m < max_iter else 0
     c = pygame.Color(0, 0,0)
     c.hsva = (hue, saturation, value, 0)
@@ -134,26 +133,37 @@ def get_complex_coords(xmin, xmax, ymin, ymax, width, height):
 def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screeninfos):
     histogram = defaultdict(lambda : 0)
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
-    
+
+    graph = Pyasciigraph()
+ 
     for row in tqdm(range(height), desc="Zeilen"):
         for col in range(width):
             c = complex(r1[col], r2[row])
             (n,m,z) = mandelbrot(c, max_iter, True)
-             
+            histogram[n] += 1
+
+    for line in  graph.graph('test print', histogram.items()):
+        print(line)
+    return histogram
+
 
 #@jit
 def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
+
+    histogram = mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos)
+    print("Histogram:"+str(histogram))
+
     surface = pygame.Surface((width, height))
     print("RenderMandel: [{a},{b}][{c},{d}][{e},{f}]".format(a=xmin, b=ymin, c=xmax, d=ymax, e=width, f=height )) 
-    (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
+    (cx, cy) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
-    for row in tqdm(range(height ), desc="Zeilen"):
-        for col in range(width):
-            c = complex(r1[col], r2[row])
+    for x in tqdm(range(width ), desc="Zeilen"):
+        for y in range(height):
+            c = complex(cx[x], cy[y])
             (n,m,z) = mandelbrot(c, max_iter, True)
             color = mapColor3(m, max_iter)
-            screen_infos[col][row] = ScreenInfo(col, row, c, n, m, 0,z, color)
-            surface.set_at( (col, row), color)
+            screen_infos[x][y] = ScreenInfo(x, y, c, n, m, 0,z, color)
+            surface.set_at( (x, y), color)
            # if (row % update_screen_every_row == 0):
            #  display = pygame.display.flip()
     return surface
