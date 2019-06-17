@@ -135,13 +135,17 @@ def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, scree
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
     graph = Pyasciigraph()
- 
+
+
+
     for row in tqdm(range(height), desc="Zeilen"):
         for col in range(width):
             c = complex(r1[col], r2[row])
             (n,m,z) = mandelbrot(c, max_iter, True)
             histogram[n] += 1
 
+    total = sum(histogram.values())
+    print("Histogramm Total{a}".format(a=total))
     for line in  graph.graph('test print', histogram.items()):
         print(line)
     return histogram
