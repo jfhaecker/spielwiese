@@ -9,12 +9,15 @@ import numpy as np
 import pygame
 from tqdm import tqdm
 from numba import jit
-from math import log,log2
+from math import log,log2,floor,ceil
 from collections import defaultdict
-from ascii_graph import Pyasciigraph
+from pygame.locals import *
+
+
+count = 0
 
 class ScreenInfo:
-    def __init__(self, screen_x, screen_y, pos_complex, iterations, n_iter, nm_iter, abs_complex, color):
+    def __init__(self, screen_x, screen_y, pos_complex, iterations, n_iter, nm_iter, abs_complex, color, hues, lerp_hue):
         self.screen_x = screen_x
         self.screen_y = screen_y
         self.pos_complex = pos_complex
@@ -23,6 +26,8 @@ class ScreenInfo:
         self.nm_iter = nm_iter
         self.abs_complex = abs_complex
         self.color = color
+        self.hues = hues
+        self.lerp_hue = lerp_hue
 
     def __str__(self):
         x = ("Screen(x,y): [{a:<3}][{b:<3}]".format(a=self.screen_x,
@@ -32,13 +37,19 @@ class ScreenInfo:
         u = ("Iterations:  [{a:<5}][{b:<5}][{c:<5}]".format(a=self.iterations,
                                                             b=self.n_iter,
                                                             c=self.nm_iter))
-        v = ("Color:       [{a}]".format(a=self.color))
-        return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v
+        v = ("Color:       [{a},{b}]".format(a=self.color, b=self.color.hsva))
+        z = ("Hue:         [{a},{b}={c}]".format(a=self.hues[floor(self.n_iter)], b=self.hues[ceil(self.n_iter)], c=self.lerp_hue))
+        return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v +"\n" + z 
 
 def init_color(max_colors):
     #colors = sns.hls_palette(100,  l=.3, s=.8)
     colors = sns.hls_palette(100)
     return colors
+
+
+def linear_interpolation(color1, color2, t):
+    c =  color1 * (1 - t) + color2 * t 
+    return c
 
 @jit
 def mapColor(count, max_iter, farben):
@@ -66,6 +77,25 @@ def mapColor3(m, max_iter):
     c = pygame.Color(0, 0,0)
     c.hsva = (hue, saturation, value, 0)
     return c
+
+def mapColor4(hue, max_iter ,m):
+    #print("MappingColor for {a} and max_iter {b} with hues {c}".format(a=m, b=max_iter, c=hues))
+    saturation = 50.0
+    value = 100 if m < max_iter else 0
+    c = pygame.Color(0)
+    c.hsva = (hue, saturation, value, 0)
+    return c
+
+def mapColor5(m, hues, max_iter):
+    hue = 0
+    if m < max_iter:
+        hue = 360 - int(360 * hues[floor(m)])
+    saturation = 50
+    value = 100 if m < max_iter else 0
+    c = pygame.Color()
+    c.hsva = (hue, saturation, value, 0)
+    return c
+
 
 def get_args():
     parser = ap.ArgumentParser(description = "Haex da best")
@@ -106,7 +136,7 @@ def printPos(pos, screen_infos):
 
 
 def printRect(rect):
-    #print("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect.topleft,
+    #hsvprint("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect.topleft,
     print("Rect(p1, p2, p3, p4): [{a},{b},{c},{d}]".format(a=rect.topleft,
                                 b=rect.bottomleft, c=rect.topright, d=rect.bottomright))
 #@jit
@@ -115,7 +145,8 @@ def mandelbrot(c, max_iter, smooth):
     for n in range(max_iter):
         if abs(z) > 2:
             if smooth:
-                ret = (n, n + 1 - log(log2(abs(z))), abs(z))
+                log_magic = n + 1 - log (log (abs(z))) / log(2)
+                ret = (n, log_magic, abs(z))
                 return ret
             else:
                 ret = (n, n, abs(z))
@@ -134,9 +165,6 @@ def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, scree
     histogram = defaultdict(lambda : 0)
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
-    graph = Pyasciigraph()
-
-
 
     for row in tqdm(range(height), desc="Zeilen"):
         for col in range(width):
@@ -144,19 +172,42 @@ def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, scree
             (n,m,z) = mandelbrot(c, max_iter, True)
             histogram[n] += 1
 
+    print_histogram(histogram)
+
+    total = 0
+    for i in range(max_iter):
+        total += histogram[i]
+    hues = []
+    hue = 0
+    for i in range(max_iter):
+        hue += (histogram[i] / total)
+        hues.append(hue)
+    hues.append(hue)
+
+    print_hues(hues)
+
+    return hues
+
+
+def print_hues(hues):
+    print("Hues")
+    for i in range(len(hues)):
+        print("Hue[{a}]={b}".format(a=i, b=hues[i]))
+    print("Sum of values {a}".format(a=sum(hues)))
+
+
+def print_histogram(histogram):
     total = sum(histogram.values())
-    print("Histogramm Total{a}".format(a=total))
-    for line in  graph.graph('test print', histogram.items()):
-        print(line)
-    return histogram
+    print("Histogramm for {a} Pixel".format(a=total))
+    for k, v in sorted(histogram.items()):
+        print("Histogram[{a}]={b}".format(a=k, b=v))
 
 
 #@jit
 def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
 
-    histogram = mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos)
-    print("Histogram:"+str(histogram))
-
+    hues = mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos)
+    
     surface = pygame.Surface((width, height))
     print("RenderMandel: [{a},{b}][{c},{d}][{e},{f}]".format(a=xmin, b=ymin, c=xmax, d=ymax, e=width, f=height )) 
     (cx, cy) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
@@ -165,11 +216,13 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
         for y in range(height):
             c = complex(cx[x], cy[y])
             (n,m,z) = mandelbrot(c, max_iter, True)
-            color = mapColor3(m, max_iter)
-            screen_infos[x][y] = ScreenInfo(x, y, c, n, m, 0,z, color)
+            if m > max_iter:
+                m = max_iter
+            mm = m % 1
+            hue = 360 - int(360 * linear_interpolation(hues[floor(m)], hues[ceil(m)], mm))
+            color = mapColor4(hue, max_iter, m)
+            screen_infos[x][y] = ScreenInfo(x, y, c, n, m, mm,z, color, hues, hue)
             surface.set_at( (x, y), color)
-           # if (row % update_screen_every_row == 0):
-           #  display = pygame.display.flip()
     return surface
 
 def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
@@ -186,8 +239,7 @@ def main():
     xmin, xmax, ymin, ymax = args.xmin, args.xmax, args.ymin,args.ymax, 
     width, height = args.width, args.height
     max_iter = args.max_iter
-
-    screen =  pygame.display.set_mode((width, height))
+    screen =  pygame.display.set_mode((width, height) )
     mouse_down, running = False, True
     render_next = True
     selection_rect = pygame.Rect(0, 0, width, height)
