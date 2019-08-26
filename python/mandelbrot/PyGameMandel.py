@@ -30,16 +30,13 @@ class ScreenInfo:
         self.lerp_hue = lerp_hue
 
     def __str__(self):
-        x = ("Screen(x,y): [{a:<3}][{b:<3}]".format(a=self.screen_x,
-                                                    b=self.screen_y))
-        y = ("Complex:     [{a:<38}]".format(a=self.pos_complex))
-        w = ("Abs(Z):      [{a:<38}]".format(a=self.abs_complex))
-        u = ("Iterations:  [{a:<5}][{b:<5}][{c:<5}]".format(a=self.iterations,
-                                                            b=self.n_iter,
-                                                            c=self.nm_iter))
-        v = ("Color:       [{a},{b}]".format(a=self.color, b=self.color.hsva))
-        z = ("Hue:         [{a},{b}={c}]".format(a=self.hues[floor(self.n_iter)], b=self.hues[ceil(self.n_iter)], c=self.lerp_hue))
-        return x + "\n" + y +"\n" + w +"\n" + u + "\n" + v +"\n" + z 
+        return f"Screen(x,y): [{self.screen_x}][{self.screen_y}]\n"  \
+            f"Complex:     [{self.pos_complex:<38}]\n"            \
+            f"Abs(Z):      [{self.abs_complex:<38}]\n"       \
+            f"Iterations:  [{self.iterations:<5}][{self.n_iter:<5}][{self.nm_iter:<5}]\n"  \
+            f"Color:       [{self.color},{self.color.hsva}]\n"  \
+            f"Hue:         [{self.hues[floor(self.n_iter)]},{self.hues[ceil(self.n_iter)]}={self.lerp_hue}]\n"
+
 
 def init_color(max_colors):
     #colors = sns.hls_palette(100,  l=.3, s=.8)
@@ -117,12 +114,12 @@ def get_args():
 
 
 def printStats(stats):
-    print("Stats for mandelbrot with Maxiter=", MAX_ITERATIONS, "(Iterations->Quantity)")
+    print(f"Stats for mandelbrot with Maxiter={MAX_ITERATIONS} (Iterations->Quantity)")
     k = 0
     for i,f in enumerate(stats):
         k += f
         print(i,"->",f)
-    print("Total Numer of Complex Points checked: %s" %k)
+    print(f"Total Numer of Complex Points checked: {k}")
 
 
 
@@ -143,7 +140,7 @@ def printRect(rect):
 def mandelbrot(c, max_iter, smooth):
     z = c
     for n in range(max_iter):
-        if abs(z) > 2:
+        if abs(z) > 300:
             if smooth:
                 log_magic = n + 1 - log (log (abs(z))) / log(2)
                 ret = (n, log_magic, abs(z))
