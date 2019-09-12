@@ -110,6 +110,8 @@ def get_args():
                         default=-2.0, type=float)
     parser.add_argument("--ymax", help="YMax",
                         default=2.0, type=float)
+    parser.add_argument("--escape_radius", help="Mandelbrot escape radius",
+                        default=2, type=int)
     return parser.parse_args()
 
 
@@ -118,13 +120,12 @@ def printStats(stats):
     k = 0
     for i,f in enumerate(stats):
         k += f
-        print(i,"->",f)
+        print(f"{i}->{f}")
     print(f"Total Numer of Complex Points checked: {k}")
 
 
 
 def printPos(pos, screen_infos):
-    #print(PIXELINFO)
     x = pos[0]
     y = pos[1]
     info = screen_infos[x][y]
@@ -133,14 +134,14 @@ def printPos(pos, screen_infos):
 
 
 def printRect(rect):
-    #hsvprint("Rect(p1, p2, p3, p4): [{a:<3},{b:<3},{c:<3},{d:<3}]".format(a=rect.topleft,
     print("Rect(p1, p2, p3, p4): [{a},{b},{c},{d}]".format(a=rect.topleft,
                                 b=rect.bottomleft, c=rect.topright, d=rect.bottomright))
 #@jit
-def mandelbrot(c, max_iter, smooth):
+# see https://linas.org/art-gallery/escape/smooth.html
+def mandelbrot(c, max_iter, smooth, escape_radius):
     z = c
     for n in range(max_iter):
-        if abs(z) > 300:
+        if abs(z) > escape_radius:
             if smooth:
                 log_magic = n + 1 - log (log (abs(z))) / log(2)
                 ret = (n, log_magic, abs(z))
@@ -158,7 +159,7 @@ def get_complex_coords(xmin, xmax, ymin, ymax, width, height):
     return (r1, r2)
 
 
-def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screeninfos):
+def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screeninfos, escape_radius):
     histogram = defaultdict(lambda : 0)
     (r1, r2) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
@@ -166,16 +167,14 @@ def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, scree
     for row in tqdm(range(height), desc="Zeilen"):
         for col in range(width):
             c = complex(r1[col], r2[row])
-            (n,m,z) = mandelbrot(c, max_iter, True)
+            (n,_,_) = mandelbrot(c, max_iter, True, escape_radius)
             histogram[n] += 1
 
     print_histogram(histogram)
 
-    total = 0
-    for i in range(max_iter):
-        total += histogram[i]
     hues = []
     hue = 0
+    total = sum(histogram[i] for i in range(max_iter))
     for i in range(max_iter):
         hue += (histogram[i] / total)
         hues.append(hue)
@@ -189,30 +188,30 @@ def mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, scree
 def print_hues(hues):
     print("Hues")
     for i in range(len(hues)):
-        print("Hue[{a}]={b}".format(a=i, b=hues[i]))
-    print("Sum of values {a}".format(a=sum(hues)))
+        print(f"Hue[{i}]={hues[i]}")
+    print(f"Sum of values {sum(hues)}")
 
 
 def print_histogram(histogram):
     total = sum(histogram.values())
-    print("Histogramm for {a} Pixel".format(a=total))
+    print(f"Histogramm for {total} Pixel")
     for k, v in sorted(histogram.items()):
-        print("Histogram[{a}]={b}".format(a=k, b=v))
+        print(f"Histogram[{k}]={v}")
 
 
 #@jit
-def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos):
+def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos, escape_radius):
 
-    hues = mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos)
+    hues = mandelbrot_histogramm(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos, escape_radius)
     
     surface = pygame.Surface((width, height))
-    print("RenderMandel: [{a},{b}][{c},{d}][{e},{f}]".format(a=xmin, b=ymin, c=xmax, d=ymax, e=width, f=height )) 
+    print(f"RenderMandel: [{xmin},{ymin}][{xmax},{ymax}][{width},{height}]") 
     (cx, cy) = get_complex_coords(xmin, xmax, ymin, ymax, width, height)
 
     for x in tqdm(range(width ), desc="Zeilen"):
         for y in range(height):
             c = complex(cx[x], cy[y])
-            (n,m,z) = mandelbrot(c, max_iter, True)
+            (n,m,z) = mandelbrot(c, max_iter, True, escape_radius)
             if m > max_iter:
                 m = max_iter
             mm = m % 1
@@ -222,10 +221,10 @@ def mandelbrot_set(xmin, xmax, ymin, ymax, width, height, max_iter, screen_infos
             surface.set_at( (x, y), color)
     return surface
 
-def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info):
+def mandelbrot_image(xmin, xmax, ymin, ymax, width, height, max_iter, pixel_info, escape_radius):
     return mandelbrot_set(xmin, xmax, ymin, ymax,
                             width, height,
-                            max_iter, pixel_info)
+                            max_iter, pixel_info, escape_radius)
 
 
 def main():
@@ -247,7 +246,7 @@ def main():
             surface = mandelbrot_image( xmin, xmax, ymin,ymax, 
                                     width, 
                                     height,
-                                    max_iter, pixel_info)
+                                    max_iter, pixel_info, args.escape_radius)
             #xmin = pixel_infos[][]
             #xmax = pixel_info
             render_next = False
