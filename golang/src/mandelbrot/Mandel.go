@@ -14,15 +14,16 @@ import (
 var (
 	top_left     = complex(-2, 1)
 	bottom_right = complex(2, -1)
-	image_width  = 2000
-	image_height = 2000
-	max_iter     = 2000
+	image_width  = 1000
+	image_height = 1000
+	max_iter     = 1000
 	sync_image   = &SyncImage{lock: &sync.Mutex{},
 		image: image.NewRGBA(image.Rectangle{
 			image.Point{0, 0},
 			image.Point{image_width, image_height},
 		})}
 	wg sync.WaitGroup
+	q  = make(chan int, 2000)
 )
 
 type ComplexPoint struct {
@@ -69,25 +70,35 @@ func mandelbrot(point *ComplexPoint) *ComplexPoint {
 	}
 }
 
-func renderline(h int) {
-	for w := 0; w < image_width; w++ {
+func renderline() {
 
-		_real := linspace(real(top_left), real(bottom_right),
-			image_width, w)
-		_imag := linspace(imag(top_left), imag(bottom_right),
-			image_height, h)
-
-		z := complex(_real, _imag)
-		point := mandelbrot(&ComplexPoint{z: z, iterations: 0})
-		co := color.RGBA{0, 0, 0, 0}
-		if point.iterations == max_iter {
-			co = color.RGBA{255, 255, 255, 255}
-		} else {
-			co = color.RGBA{0, 0, 0, 255}
+	h := 0
+	for {
+		if len(q) == 0 {
+			break
 		}
-		sync_image.Set(w, h, co)
+		h = <-q
+
+		for w := 0; w < image_width; w++ {
+
+			_real := linspace(real(top_left), real(bottom_right),
+				image_width, w)
+			_imag := linspace(imag(top_left), imag(bottom_right),
+				image_height, h)
+
+			z := complex(_real, _imag)
+			point := mandelbrot(&ComplexPoint{z: z, iterations: 0})
+			co := color.RGBA{0, 0, 0, 0}
+			if point.iterations == max_iter {
+				co = color.RGBA{255, 255, 255, 255}
+			} else {
+				co = color.RGBA{0, 0, 0, 255}
+			}
+			sync_image.Set(w, h, co)
+		}
+
 	}
-	defer wg.Done()
+	wg.Done()
 }
 
 func main() {
@@ -95,8 +106,12 @@ func main() {
 	fmt.Println("der haex kann das mandeln nicht lassen...")
 
 	for h := 0; h < image_height; h++ {
+		q <- h
+	}
+
+	for i := 0; i < 2; i++ {
 		wg.Add(1)
-		go renderline(h)
+		go renderline()
 	}
 	wg.Wait()
 	out_file, _ := os.Create("mandel.png")
