@@ -103,7 +103,7 @@ func main() {
 	arr := toArray(root)
 	fmt.Println("-------------------")
 	for num, i := range arr {
-		fmt.Printf("%v:%v\n", num, i)
+		fmt.Printf("%03d:%v\n", num, i)
 	}
 
 	fmt.Println("-------------------")
