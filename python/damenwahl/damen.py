@@ -15,7 +15,8 @@ def dame(reihen, spalten):
         print(f"{''.join(stack)}->dame fertig")
         return [[]]
     else:
-        r = dame_dazu(reihen - 1, spalten,dame(reihen - 1, spalten))
+        k = dame(reihen - 1, spalten)
+        r = dame_dazu(reihen - 1, spalten,k)
         stack.pop()
         return r
 
@@ -37,7 +38,7 @@ global stack
 stack= []
 
 print("_________________________")
-k = dame(8,8)
+k = dame(2,2)
 print("_________________________")
 print(f"{len(k)} Lösungen")
 for l in k:
