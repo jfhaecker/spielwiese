@@ -1,2 +1,2 @@
 # spielwiese
-Diverse Programmiergeschichten:-))
+Diverse Programmiergeschichten
