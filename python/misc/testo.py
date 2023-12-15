@@ -1,6 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import numpy as np
 
 dates = [
@@ -76,7 +76,11 @@ dates = [
 "27.10.2022",
 "22.12.2022",
 "24.02.2023",
-"24.04.2023"
+"24.04.2023",
+"24.06.2023",
+"24.08.2023",
+"24.10.2023",
+"15.12.2023",
 ]
 
 date_format = "%d.%m.%Y"
